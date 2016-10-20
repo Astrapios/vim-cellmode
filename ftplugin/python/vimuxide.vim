@@ -1,5 +1,5 @@
 " Implementation of a MATLAB-like cellmode for python scripts where cells
-" are delimited by ##
+" are delimited by g:vimuxide_block_separator
 "
 " You can define the following globals or buffer config variables
 "  let g:vimuxide_tmux_sessionname='$ipython'
@@ -8,6 +8,7 @@
 "  let g:vimuxide_screen_sessionname='ipython'
 "  let g:vimuxide_screen_window='0'
 "  let g:vimuxide_use_tmux=1
+"  let g:vimuxide_block_separator='#%%'
 
 function! PythonUnindent(code)
   " The code is unindented so the first selected line has 0 indentation
@@ -188,20 +189,20 @@ endfunction
 
 function! RunTmuxPythonCell(restore_cursor)
   " This is to emulate MATLAB's cell mode
-  " Cells are delimited by ##. Note that there should be a ## at the end of the
+  " Cells are delimited by g:vimuxide_block_separator. Note that there should be a g:vimuxide_block_separator at the end of the
   " file
-  " The :?##?;/##/ part creates a range with the following
-  " ?##? search backwards for ##
+  " The :?g:vimuxide_block_separator?;/g:vimuxide_block_separator/ part creates a range with the following
+  " ?g:vimuxide_block_separator? search backwards for g:vimuxide_block_separator
 
-  " Then ';' starts the range from the result of the previous search (##)
-  " /##/ End the range at the next ##
+  " Then ';' starts the range from the result of the previous search (g:vimuxide_block_separator)
+  " /g:vimuxide_block_separator/ End the range at the next g:vimuxide_block_separator
   " See the doce on 'ex ranges' here :
   " http://tnerual.eriogerg.free.fr/vimqrc.html
   call DefaultVars()
   if a:restore_cursor
     let l:winview = winsaveview()
   end
-  silent :?##?;/##/y a
+  silent :?g:vimuxide_block_separator?;/g:vimuxide_block_separator/y a
 
   " Now, we want to position ourselves inside the next block to allow block
   " execution chaining (of course if restore_cursor is true, this is a no-op
@@ -210,7 +211,7 @@ function! RunTmuxPythonCell(restore_cursor)
   " Move one line down
   execute "normal! j"
 
-  " The above will have the leading and ending ## in the register, but we
+  " The above will have the leading and ending g:vimuxide_block_separator in the register, but we
   " have to remove them (especially leading one) to get a correct indentation
   " estimate. So just select the correct subrange of lines [1:-2]
   let @a=join(split(@a, "\n")[1:-2], "\n")
@@ -222,7 +223,7 @@ endfunction
 
 function! RunTmuxPythonAllCellsAbove()
   " Executes all the cells above the current line. That is, everything from
-  " the beginning of the file to the closest ## above the current line
+  " the beginning of the file to the closest g:vimuxide_block_separator above the current line
   call DefaultVars()
 
   " Ask the user for confirmation, this could lead to huge execution
@@ -232,9 +233,9 @@ function! RunTmuxPythonAllCellsAbove()
 
   let l:cursor_pos = getpos(".")
 
-  " Creates a range from the first line to the closest ## above the current
-  " line (?##? searches backward for ##)
-  silent :1,?##?y a
+  " Creates a range from the first line to the closest g:vimuxide_block_separator above the current
+  " line (?g:vimuxide_block_separator? searches backward for g:vimuxide_block_separator)
+  silent :1,?g:vimuxide_block_separator?y a
 
   let @a=join(split(@a, "\n")[:-2], "\n")
   call RunTmuxPythonReg()
