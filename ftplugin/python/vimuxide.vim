@@ -203,7 +203,7 @@ function! RunTmuxPythonCell(restore_cursor)
   if a:restore_cursor
     let l:winview = winsaveview()
   end
-  silent :?<C-r>=g:vimuxide_block_separator<CR>?;/<C-r>=g:vimuxide_block_separator<CR>/y a
+  silent :exec "?".g:vimuxide_block_separator."?;/".g:vimuxide_block_separator."/y a"
 
   " Now, we want to position ourselves inside the next block to allow block
   " execution chaining (of course if restore_cursor is true, this is a no-op
@@ -236,7 +236,7 @@ function! RunTmuxPythonAllCellsAbove()
 
   " Creates a range from the first line to the closest <C-r>=g:vimuxide_block_separator<CR> above the current
   " line (?<C-r>=g:vimuxide_block_separator<CR>? searches backward for <C-r>=g:vimuxide_block_separator<CR>)
-  silent :1,?<C-r>=g:vimuxide_block_separator<CR>?y a
+  silent :exec "1,?".g:vimuxide_block_separator."?y a"
 
   let @a=join(split(@a, "\n")[:-2], "\n")
   call RunTmuxPythonReg()
