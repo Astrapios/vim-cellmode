@@ -2,12 +2,12 @@
 " are delimited by ##
 "
 " You can define the following globals or buffer config variables
-"  let g:cellmode_tmux_sessionname='$ipython'
-"  let g:cellmode_tmux_windowname='ipython'
-"  let g:cellmode_tmux_panenumber='0'
-"  let g:cellmode_screen_sessionname='ipython'
-"  let g:cellmode_screen_window='0'
-"  let g:cellmode_use_tmux=1
+"  let g:vimuxide_tmux_sessionname='$ipython'
+"  let g:vimuxide_tmux_windowname='ipython'
+"  let g:vimuxide_tmux_panenumber='0'
+"  let g:vimuxide_screen_sessionname='ipython'
+"  let g:vimuxide_screen_window='0'
+"  let g:vimuxide_use_tmux=1
 
 function! PythonUnindent(code)
   " The code is unindented so the first selected line has 0 indentation
@@ -39,11 +39,11 @@ endfunction
 
 function! CleanupTempFiles()
   " Called when leaving current buffer; Cleans up temporary files
-  if (exists('b:cellmode_fnames'))
-    for fname in b:cellmode_fnames
+  if (exists('b:vimuxide_fnames'))
+    for fname in b:vimuxide_fnames
       call delete(fname)
     endfor
-    unlet b:cellmode_fnames
+    unlet b:vimuxide_fnames
   end
 endfunction
 
@@ -56,56 +56,56 @@ function! GetNextTempFile()
   " If we use only one temporary file, quick execution of multiple cells will
   " result in the tmpfile being overrident. So we use multiple tmpfile that
   " act as a rolling buffer (the size of which is configured by
-  " cellmode_n_files)
-  if !exists("b:cellmode_fnames")
+  " vimuxide_n_files)
+  if !exists("b:vimuxide_fnames")
     au BufDelete <buffer> call CleanupTempFiles()
-    let b:cellmode_fnames = []
-    for i in range(1, b:cellmode_n_files)
-      call add(b:cellmode_fnames, tempname() . ".ipy")
+    let b:vimuxide_fnames = []
+    for i in range(1, b:vimuxide_n_files)
+      call add(b:vimuxide_fnames, tempname() . ".ipy")
     endfor
-    let b:cellmode_fnames_index = 0
+    let b:vimuxide_fnames_index = 0
   end
-  let l:cellmode_fname = b:cellmode_fnames[b:cellmode_fnames_index]
+  let l:vimuxide_fname = b:vimuxide_fnames[b:vimuxide_fnames_index]
   " TODO: Would be better to use modulo, but vim doesn't seem to like % here...
-  if (b:cellmode_fnames_index >= b:cellmode_n_files - 1)
-    let b:cellmode_fnames_index = 0
+  if (b:vimuxide_fnames_index >= b:vimuxide_n_files - 1)
+    let b:vimuxide_fnames_index = 0
   else
-    let b:cellmode_fnames_index += 1
+    let b:vimuxide_fnames_index += 1
   endif
 
-  "echo 'cellmode_fname : ' . l:cellmode_fname
-  return l:cellmode_fname
+  "echo 'vimuxide_fname : ' . l:vimuxide_fname
+  return l:vimuxide_fname
 endfunction
 
 function! DefaultVars()
   " Load and set defaults config variables :
-  " - b:cellmode_fname temporary filename
-  " - g:cellmode_tmux_sessionname, g:cellmode_tmux_windowname,
-  "   g:cellmode_tmux_panenumber : default tmux
+  " - b:vimuxide_fname temporary filename
+  " - g:vimuxide_tmux_sessionname, g:vimuxide_tmux_windowname,
+  "   g:vimuxide_tmux_panenumber : default tmux
   "   target
-  " - b:cellmode_tmux_sessionname, b:cellmode_tmux_windowname,
-  "   b:cellmode_tmux_panenumber :
+  " - b:vimuxide_tmux_sessionname, b:vimuxide_tmux_windowname,
+  "   b:vimuxide_tmux_panenumber :
   "   buffer-specific target (defaults to g:)
-  let b:cellmode_n_files = GetVar('cellmode_n_files', 10)
+  let b:vimuxide_n_files = GetVar('vimuxide_n_files', 10)
 
-  if !exists("b:cellmode_use_tmux")
-    let b:cellmode_use_tmux = GetVar('cellmode_use_tmux', 1)
+  if !exists("b:vimuxide_use_tmux")
+    let b:vimuxide_use_tmux = GetVar('vimuxide_use_tmux', 1)
   end
 
-  if !exists("b:cellmode_tmux_sessionname") ||
-   \ !exists("b:cellmode_tmux_windowname") ||
-   \ !exists("b:cellmode_tmux_panenumber")
+  if !exists("b:vimuxide_tmux_sessionname") ||
+   \ !exists("b:vimuxide_tmux_windowname") ||
+   \ !exists("b:vimuxide_tmux_panenumber")
     " Empty target session and window by default => try to automatically pick
     " tmux session
-    let b:cellmode_tmux_sessionname = GetVar('cellmode_tmux_sessionname', '')
-    let b:cellmode_tmux_windowname = GetVar('cellmode_tmux_windowname', '')
-    let b:cellmode_tmux_panenumber = GetVar('cellmode_tmux_panenumber', '0')
+    let b:vimuxide_tmux_sessionname = GetVar('vimuxide_tmux_sessionname', '')
+    let b:vimuxide_tmux_windowname = GetVar('vimuxide_tmux_windowname', '')
+    let b:vimuxide_tmux_panenumber = GetVar('vimuxide_tmux_panenumber', '0')
   end
 
-  if !exists("g:cellmode_screen_sessionname") ||
-   \ !exists("b:cellmode_screen_window")
-    let b:cellmode_screen_sessionname = GetVar('cellmode_screen_sessionname', 'ipython')
-    let b:cellmode_screen_window = GetVar('cellmode_screen_window', '0')
+  if !exists("g:vimuxide_screen_sessionname") ||
+   \ !exists("b:vimuxide_screen_window")
+    let b:vimuxide_screen_sessionname = GetVar('vimuxide_screen_sessionname', 'ipython')
+    let b:vimuxide_screen_window = GetVar('vimuxide_screen_window', '0')
   end
 endfunction
 
@@ -126,26 +126,26 @@ function! CopyToTmux(code)
   if len(l:lines) == 0
     call add(l:lines, ' ')
   end
-  let l:cellmode_fname = GetNextTempFile()
-  call writefile(l:lines, l:cellmode_fname)
+  let l:vimuxide_fname = GetNextTempFile()
+  call writefile(l:lines, l:vimuxide_fname)
 
   " tmux requires the sessionname to start with $ (for example $ipython to
   " target the session named 'ipython'). Except in the case where we
   " want to target the current tmux session (with vim running in tmux)
-  if strlen(b:cellmode_tmux_sessionname) == 0
+  if strlen(b:vimuxide_tmux_sessionname) == 0
     let l:sprefix = ''
   else
     let l:sprefix = '$'
   end
-  let target = l:sprefix . b:cellmode_tmux_sessionname . ':'
-             \ . b:cellmode_tmux_windowname . '.'
-             \ . b:cellmode_tmux_panenumber
+  let target = l:sprefix . b:vimuxide_tmux_sessionname . ':'
+             \ . b:vimuxide_tmux_windowname . '.'
+             \ . b:vimuxide_tmux_panenumber
 
   " Ipython has some trouble if we paste large buffer if it has been started
   " in a small console. We use %load to work around that
-  "call CallSystem('tmux load-buffer ' . l:cellmode_fname)
+  "call CallSystem('tmux load-buffer ' . l:vimuxide_fname)
   "call CallSystem('tmux paste-buffer -t ' . target)
-  call CallSystem("tmux set-buffer \"%load -y " . l:cellmode_fname . "\n\"")
+  call CallSystem("tmux set-buffer \"%load -y " . l:vimuxide_fname . "\n\"")
   call CallSystem('tmux paste-buffer -t "' . target . '"')
   " In ipython5, the cursor starts at the top of the lines, so we have to move
   " to the bottom
@@ -163,23 +163,23 @@ function! CopyToScreen(code)
   if len(l:lines) == 0
     call add(l:lines, ' ')
   end
-  let l:cellmode_fname = call GetNextTempFile()
-  call writefile(l:lines, l:cellmode_fname)
+  let l:vimuxide_fname = call GetNextTempFile()
+  call writefile(l:lines, l:vimuxide_fname)
 
   if has('macunix')
-    call system("pbcopy < " . l:cellmode_fname)
+    call system("pbcopy < " . l:vimuxide_fname)
   else
-    call system("xclip -i -selection c " . l:cellmode_fname)
+    call system("xclip -i -selection c " . l:vimuxide_fname)
   end
-  call system("screen -S " . b:cellmode_screen_sessionname .
-             \ " -p " . b:cellmode_screen_window
+  call system("screen -S " . b:vimuxide_screen_sessionname .
+             \ " -p " . b:vimuxide_screen_window
               \ . " -X stuff '%paste'")
 endfunction
 
 function! RunTmuxPythonReg()
   " Paste into tmux the content of the register @a
   let l:code = PythonUnindent(@a)
-  if b:cellmode_use_tmux
+  if b:vimuxide_use_tmux
     call CopyToTmux(l:code)
   else
     call CopyToScreen(l:code)
@@ -258,9 +258,9 @@ function! InitVariable(var, value)
     return 0
 endfunction
 
-call InitVariable("g:cellmode_default_mappings", 1)
+call InitVariable("g:vimuxide_default_mappings", 1)
 
-if g:cellmode_default_mappings
+if g:vimuxide_default_mappings
     vmap <silent> <C-c> :call RunTmuxPythonChunk()<CR>
     noremap <silent> <C-b> :call RunTmuxPythonCell(0)<CR>
     noremap <silent> <C-g> :call RunTmuxPythonCell(1)<CR>

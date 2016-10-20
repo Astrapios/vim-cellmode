@@ -1,17 +1,17 @@
 *cellmode.txt*  For Vim version 7.4
 
 =============================================================================
-Cellmode                                 *Cellmode*
+Vimuxide                                 *Vimuxide*
 
-  1. Introduction ...................... |CellmodeIntro|
-  2. Usage ............................. |CellmodeUsage|
-  3. Mapping ........................... |CellmodeMappings|
-  4. Options ........................... |CellmodeOptions|
-  5. Credits ........................... |CellmodeCredits|
+  1. Introduction ...................... |VimuxideIntro|
+  2. Usage ............................. |VimuxideUsage|
+  3. Mapping ........................... |VimuxideMappings|
+  4. Options ........................... |VimuxideOptions|
+  5. Credits ........................... |VimuxideCredits|
 
 
 =============================================================================
-1. Introduction                          *CellmodeIntro*
+1. Introduction                          *VimuxideIntro*
 
 This a vim plugin that enables MATLAB-style cell mode execution for python
 scripts in vim, assuming an ipython interpreter running in screen (or tmux).
@@ -41,7 +41,7 @@ print statements will be de-indented and sent to tmux and ipython will
 correctly run them.
 
 =============================================================================
-2. Usage                                       *CellmodeUsage*
+2. Usage                                       *VimuxideUsage*
 
 This plugin assumes you have an ipython interpreter running in tmux.
 The target tmux pane to which python cells will be sent should be
@@ -56,7 +56,7 @@ Then,you can use the |cellmode-mappings| to execute cells and send them to
 your ipython interpreter.
 
 =============================================================================
-3. Mappings                                       *CellmodeMappings*
+3. Mappings                                       *VimuxideMappings*
 
 By default, the following mappings are enabled :
 
@@ -66,7 +66,7 @@ By default, the following mappings are enabled :
 
 You can disable default mappings :
 
-    let g:cellmode_default_mappings='0'
+    let g:vimuxide_default_mappings='0'
 
 In addition, there is a function to execute all cells above the current line
 which isn't bound by default, but you can easily bind it with :
@@ -74,16 +74,16 @@ which isn't bound by default, but you can easily bind it with :
   noremap <silent> <C-a> :call RunTmuxPythonAllCellsAbove()<CR>
 
 =============================================================================
-4. Options                                       *CellmodeOptions*
+4. Options                                       *VimuxideOptions*
 
 To configure the target tmux pane in which ipython is running, use the
 three following variables (which can be either globals or buffer-local (b:)) :
 
-  let g:cellmode_tmux_sessionname='ipython'
-  let g:cellmode_tmux_windowname='ipython'
-  let g:cellmode_tmux_panenumber='0'
+  let g:vimuxide_tmux_sessionname='ipython'
+  let g:vimuxide_tmux_windowname='ipython'
+  let g:vimuxide_tmux_panenumber='0'
 
-You can also set `g:cellmode_tmux_sessionname` and `g:cellmode_tmux_windowname` to empty
+You can also set `g:vimuxide_tmux_sessionname` and `g:vimuxide_tmux_windowname` to empty
 strings. This will make tmux automatically pick a tmux session. If you are
 running vim inside tmux, this will pick the current tmux session. Otherwise,
 it seems to pick the most recently launched session.
@@ -95,15 +95,9 @@ You can change the default mappings which are defined by
   noremap <silent> <C-g> :call RunTmuxPythonCell(1)<CR>
 
 =============================================================================
-5. Credits                                       *CellmodeCredits*
+5. Credits                                       *VimuxideCredits*
 
-Vim-cellmode was initially written by Julien Rebetez.
-
-Thanks to the following people for their code/ideas/bug reports/other
-contributions :
-
-  Erdi Aker
-  nilsbecker
+Vimuxide is adapted from Vim-cellmode which was initially written by Julien Rebetez.
 
 
   vim:ts=4:et:ft=help:
