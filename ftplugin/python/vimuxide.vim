@@ -1,5 +1,5 @@
 " Implementation of a MATLAB-like cellmode for python scripts where cells
-" are delimited by g:vimuxide_block_separator
+" are delimited by <C-r>=g:vimuxide_block_separator<CR>
 "
 " You can define the following globals or buffer config variables
 "  let g:vimuxide_tmux_sessionname='$ipython'
@@ -188,21 +188,22 @@ function! RunTmuxPythonReg()
 endfunction
 
 function! RunTmuxPythonCell(restore_cursor)
-  " This is to emulate MATLAB's cell mode
-  " Cells are delimited by g:vimuxide_block_separator. Note that there should be a g:vimuxide_block_separator at the end of the
-  " file
-  " The :?g:vimuxide_block_separator?;/g:vimuxide_block_separator/ part creates a range with the following
-  " ?g:vimuxide_block_separator? search backwards for g:vimuxide_block_separator
+  " This is to emulate MATLAB's cell mode.
+  " Cells are delimited by g:vimuxide_block_separator. Note that there should be a g:vimuxide_block_separator at the end of the file.
+  " <C-r>= before and <CR> after the variable is required to properly escape the value to the
+  " command mode
+  " The :?<C-r>=g:vimuxide_block_separator<CR>?;/<C-r>=g:vimuxide_block_separator<CR>/ part creates a range with the following
+  " ?<C-r>=g:vimuxide_block_separator<CR>? search backwards for g:vimuxide_block_separator
 
-  " Then ';' starts the range from the result of the previous search (g:vimuxide_block_separator)
-  " /g:vimuxide_block_separator/ End the range at the next g:vimuxide_block_separator
+  " Then ';' starts the range from the result of the previous search (<C-r>=g:vimuxide_block_separator<CR>)
+  " /<C-r>=g:vimuxide_block_separator<CR>/ End the range at the next <C-r>=g:vimuxide_block_separator<CR>
   " See the doce on 'ex ranges' here :
   " http://tnerual.eriogerg.free.fr/vimqrc.html
   call DefaultVars()
   if a:restore_cursor
     let l:winview = winsaveview()
   end
-  silent :?g:vimuxide_block_separator?;/g:vimuxide_block_separator/y a
+  silent :?<C-r>=g:vimuxide_block_separator<CR>?;/<C-r>=g:vimuxide_block_separator<CR>/y a
 
   " Now, we want to position ourselves inside the next block to allow block
   " execution chaining (of course if restore_cursor is true, this is a no-op
@@ -211,7 +212,7 @@ function! RunTmuxPythonCell(restore_cursor)
   " Move one line down
   execute "normal! j"
 
-  " The above will have the leading and ending g:vimuxide_block_separator in the register, but we
+  " The above will have the leading and ending <C-r>=g:vimuxide_block_separator<CR> in the register, but we
   " have to remove them (especially leading one) to get a correct indentation
   " estimate. So just select the correct subrange of lines [1:-2]
   let @a=join(split(@a, "\n")[1:-2], "\n")
@@ -223,7 +224,7 @@ endfunction
 
 function! RunTmuxPythonAllCellsAbove()
   " Executes all the cells above the current line. That is, everything from
-  " the beginning of the file to the closest g:vimuxide_block_separator above the current line
+  " the beginning of the file to the closest <C-r>=g:vimuxide_block_separator<CR> above the current line
   call DefaultVars()
 
   " Ask the user for confirmation, this could lead to huge execution
@@ -233,9 +234,9 @@ function! RunTmuxPythonAllCellsAbove()
 
   let l:cursor_pos = getpos(".")
 
-  " Creates a range from the first line to the closest g:vimuxide_block_separator above the current
-  " line (?g:vimuxide_block_separator? searches backward for g:vimuxide_block_separator)
-  silent :1,?g:vimuxide_block_separator?y a
+  " Creates a range from the first line to the closest <C-r>=g:vimuxide_block_separator<CR> above the current
+  " line (?<C-r>=g:vimuxide_block_separator<CR>? searches backward for <C-r>=g:vimuxide_block_separator<CR>)
+  silent :1,?<C-r>=g:vimuxide_block_separator<CR>?y a
 
   let @a=join(split(@a, "\n")[:-2], "\n")
   call RunTmuxPythonReg()
