@@ -5,9 +5,6 @@
 "  let g:vimuxide_tmux_sessionname='$ipython'
 "  let g:vimuxide_tmux_windowname='ipython'
 "  let g:vimuxide_tmux_panenumber='0'
-"  let g:vimuxide_screen_sessionname='ipython'
-"  let g:vimuxide_screen_window='0'
-"  let g:vimuxide_use_tmux=1
 "  let g:vimuxide_block_separator='#%%'
 
 function! PythonUnindent(code)
@@ -29,9 +26,7 @@ endfunction
 function! GetVar(name, default)
   " Return a value for the given variable, looking first into buffer, then
   " globals and defaulting to default
-  if (exists ("b:" . a:name))
-    return b:{a:name}
-  elseif (exists ("g:" . a:name))
+  if (exists ("g:" . a:name))
     return g:{a:name}
   else
     return a:default
@@ -78,6 +73,24 @@ function! GetNextTempFile()
   return l:vimuxide_fname
 endfunction
 
+function! GetSessionName()
+    let l:out = system("tmux display-message -p '#S'")[:-2] "[:-2] removes the null character
+
+    return l:out
+endfunction
+
+function! GetWindowName()
+    let l:out = system("tmux display-message -p '#W'")[:-2] "[:-2] removes the null character
+
+    return l:out
+endfunction
+
+function! GetWindowName()
+    let l:out = system("tmux display-message -p '#W'")[:-2] "[:-2] removes the null character
+
+    return l:out
+endfunction
+
 function! DefaultVars()
   " Load and set defaults config variables :
   " - b:vimuxide_fname temporary filename
@@ -89,28 +102,14 @@ function! DefaultVars()
   "   buffer-specific target (defaults to g:)
   let b:vimuxide_n_files = GetVar('vimuxide_n_files', 10)
 
-  if !exists("b:vimuxide_use_tmux")
-    let b:vimuxide_use_tmux = GetVar('vimuxide_use_tmux', 1)
-  end
+    " Automatically detects tmux session unless globally defined
+  let b:vimuxide_tmux_sessionname = GetVar('vimuxide_tmux_sessionname', GetSessionName())
+  let b:vimuxide_tmux_windowname = GetVar('vimuxide_tmux_windowname', GetWindowName())
+  let b:vimuxide_tmux_panenumber = GetVar('vimuxide_tmux_panenumber', '1')
 
-  if !exists("b:vimuxide_tmux_sessionname") ||
-   \ !exists("b:vimuxide_tmux_windowname") ||
-   \ !exists("b:vimuxide_tmux_panenumber")
-    " Empty target session and window by default => try to automatically pick
-    " tmux session
-    let b:vimuxide_tmux_sessionname = GetVar('vimuxide_tmux_sessionname', '')
-    let b:vimuxide_tmux_windowname = GetVar('vimuxide_tmux_windowname', '')
-    let b:vimuxide_tmux_panenumber = GetVar('vimuxide_tmux_panenumber', '0')
-  end
-
-  if !exists("g:vimuxide_screen_sessionname") ||
-   \ !exists("b:vimuxide_screen_window")
-    let b:vimuxide_screen_sessionname = GetVar('vimuxide_screen_sessionname', 'ipython')
-    let b:vimuxide_screen_window = GetVar('vimuxide_screen_window', '0')
-  end
 endfunction
 
-function! CallSystem(cmd)
+function! g:CallSystem(cmd)
   " Execute the given system command, reporting errors if any
   let l:out = system(a:cmd)
   if v:shell_error != 0
@@ -133,12 +132,7 @@ function! CopyToTmux(code)
   " tmux requires the sessionname to start with $ (for example $ipython to
   " target the session named 'ipython'). Except in the case where we
   " want to target the current tmux session (with vim running in tmux)
-  if strlen(b:vimuxide_tmux_sessionname) == 0
-    let l:sprefix = ''
-  else
-    let l:sprefix = '$'
-  end
-  let target = l:sprefix . b:vimuxide_tmux_sessionname . ':'
+  let target = b:vimuxide_tmux_sessionname . ':'
              \ . b:vimuxide_tmux_windowname . '.'
              \ . b:vimuxide_tmux_panenumber
 
@@ -156,35 +150,10 @@ function! CopyToTmux(code)
   call CallSystem('tmux send-keys -t "' . target . '" Enter Enter')
 endfunction
 
-function! CopyToScreen(code)
-  let l:lines = split(a:code, "\n")
-  " If the file is empty, it seems like tmux load-buffer keep the current
-  " buffer and this cause the last command to be repeated. We do not want that
-  " to happen, so add a dummy string
-  if len(l:lines) == 0
-    call add(l:lines, ' ')
-  end
-  let l:vimuxide_fname = call GetNextTempFile()
-  call writefile(l:lines, l:vimuxide_fname)
-
-  if has('macunix')
-    call system("pbcopy < " . l:vimuxide_fname)
-  else
-    call system("xclip -i -selection c " . l:vimuxide_fname)
-  end
-  call system("screen -S " . b:vimuxide_screen_sessionname .
-             \ " -p " . b:vimuxide_screen_window
-              \ . " -X stuff '%paste'")
-endfunction
-
 function! RunTmuxPythonReg()
   " Paste into tmux the content of the register @a
   let l:code = PythonUnindent(@a)
-  if b:vimuxide_use_tmux
-    call CopyToTmux(l:code)
-  else
-    call CopyToScreen(l:code)
-  end
+  call CopyToTmux(l:code)
 endfunction
 
 function! RunTmuxPythonCell(restore_cursor)
@@ -221,6 +190,23 @@ function! RunTmuxPythonCell(restore_cursor)
     call winrestview(l:winview)
   end
 endfunction
+
+function! ResetTmuxSettings()
+  "  reset below varaibles
+  "  g:vimuxide_tmux_sessionname='$ipython'
+  "  g:vimuxide_tmux_windowname='ipython'
+  "  g:vimuxide_tmux_panenumber='0'
+  let g:vimuxide_tmux_sessionname = input("New sessionname: ", '0')
+  let g:vimuxide_tmux_windowname = input("New Window #: ", '0')
+  let g:vimuxide_tmux_panenumber = input("New Pane #: ", '1')
+endfunction
+
+function! UnsetTmuxSettings()
+  unlet g:vimuxide_tmux_sessionname
+  unlet g:vimuxide_tmux_windowname
+  unlet g:vimuxide_tmux_panenumber
+endfunction
+
 
 function! RunTmuxPythonAllCellsAbove()
   " Executes all the cells above the current line. That is, everything from
@@ -266,4 +252,6 @@ if g:vimuxide_default_mappings
     vmap <silent> <C-c> :call RunTmuxPythonChunk()<CR>
     noremap <silent> <C-b> :call RunTmuxPythonCell(0)<CR>
     noremap <silent> <C-g> :call RunTmuxPythonCell(1)<CR>
+    noremap <F7> :call ResetTmuxSettings()<CR>
+    noremap <F8> :call UnsetTmuxSettings()<CR>
 endif
