@@ -236,6 +236,26 @@ function! RunTmuxPythonChunk() range
   call RunTmuxPythonReg()
 endfunction
 
+function! RunTmuxPythonFile()
+    " get file directory and file name
+    let l:file_directory=expand('%:p:h')
+    let l:file_name=expand('%:t')
+
+    " define tmux session, window, and pane
+    call DefaultVars()
+    let l:target = b:vimuxide_tmux_sessionname . ':'
+             \ . b:vimuxide_tmux_windowname . '.'
+             \ . b:vimuxide_tmux_panenumber
+
+    " define commands to send
+    let l:change_dir = "'cd \"".l:file_directory."\"' C-m"
+    let l:run_file = "'run \"".l:file_name."\"' C-m"
+
+    call CallSystem("tmux send-keys -t " .l:target." ".l:change_dir)
+    call CallSystem("tmux send-keys -t " .l:target." ".l:run_file)
+endfunction
+    
+
 " Returns:
 "   1 if the var is set, 0 otherwise
 function! InitVariable(var, value)
@@ -252,6 +272,7 @@ if g:vimuxide_default_mappings
     vmap <silent> <C-c> :call RunTmuxPythonChunk()<CR>
     noremap <silent> <C-b> :call RunTmuxPythonCell(0)<CR>
     noremap <silent> <C-g> :call RunTmuxPythonCell(1)<CR>
+    noremap <F5> :w<CR>:call RunTmuxPythonFile()<CR>
     noremap <F7> :call ResetTmuxSettings()<CR>
     noremap <F8> :call UnsetTmuxSettings()<CR>
 endif
