@@ -41,7 +41,7 @@ function! GetNextTempFile()
     au BufDelete <buffer> call CleanupTempFiles()
     let b:vimuxide_fnames = []
     for i in range(1, b:vimuxide_n_files)
-      call add(b:vimuxide_fnames, tempname() . ".ipy")
+      call add(b:vimuxide_fnames, tempname() . ".tmp")
     endfor
     let b:vimuxide_fnames_index = 0
   end
@@ -57,18 +57,6 @@ function! GetNextTempFile()
   return l:vimuxide_fname
 endfunction
 
-function! GetSessionName()
-    let l:out = system("tmux display-message -p '#S'")[:-2] "[:-2] removes the null character
-
-    return l:out
-endfunction
-
-function! GetWindowName()
-    let l:out = system("tmux display-message -p '#W'")[:-2] "[:-2] removes the null character
-
-    return l:out
-endfunction
-
 function! DefaultVars()
   " Load and set defaults config variables :
   " - b:vimuxide_fname temporary filename
@@ -78,54 +66,115 @@ function! DefaultVars()
   " - b:vimuxide_tmux_sessionname, b:vimuxide_tmux_windowname,
   "   b:vimuxide_tmux_panenumber :
   "   buffer-specific target (defaults to g:)
-  let b:vimuxide_n_files = GetVar('vimuxide_n_files', 10)
 
-    " Automatically detects tmux session unless globally defined
-  let b:vimuxide_tmux_sessionname = GetVar('vimuxide_tmux_sessionname', GetSessionName())
-  let b:vimuxide_tmux_windowname = GetVar('vimuxide_tmux_windowname', GetWindowName())
-  let b:vimuxide_tmux_panenumber = GetVar('vimuxide_tmux_panenumber', '1')
+  let l:global_variable_exists = exists('g:vimuxide_tmux_sessionname') &&
+              \exists('g:vimuxide_tmux_windowname') &&
+              \exists('g:vimuxide_tmux_panenumber')
 
+  if !l:global_variable_exists
+      let b:vimuxide_n_files=10
+      call Tmux_session_finder()
+
+      let b:vimuxide_tmux_sessionname = g:vimuxide_tmux_sessionname
+      let b:vimuxide_tmux_windowname = g:vimuxide_tmux_windowname
+      let b:vimuxide_tmux_panenumber = g:vimuxide_tmux_panenumber
+
+  else
+      let b:vimuxide_n_files = GetVar('vimuxide_n_files', 10)
+      let b:vimuxide_tmux_sessionname = g:vimuxide_tmux_sessionname
+      let b:vimuxide_tmux_windowname = g:vimuxide_tmux_windowname
+      let b:vimuxide_tmux_panenumber = g:vimuxide_tmux_panenumber
+  endif
 endfunction
+
+function! Tmux_session_finder()
+    " search string for pane based on filetype, needs little more work for
+    " non interactive codes that depends on makefile
+    let l:session_type = &filetype
+
+    let l:tmux_sessions = split(system('tmux list-sessions | grep -o ^\\d')) 
+
+    for i in l:tmux_sessions
+        let g:vimuxide_tmux_sessionname = i
+        let l:tmux_windows = 
+                    \split(system('tmux list-windows -t '.i.' | grep -o ^\\d'))
+        
+        for j in l:tmux_windows
+            let g:vimuxide_tmux_windowname = j
+            let l:vimuxide_tmux_panenumber =
+                        \system("tmux list-panes -t ".i.":".j." -F '#{pane_index} #{pane_title}' | grep ".l:session_type." | grep -o '^\\d'")
+
+            if strlen(l:vimuxide_tmux_panenumber)!=0
+                let g:vimuxide_tmux_panenumber =
+                            \split(l:vimuxide_tmux_panenumber)[0]
+                break
+            endif
+        endfor
+            if strlen(l:vimuxide_tmux_panenumber)!=0
+            break
+        endif
+    endfor
+
+    " if pane with appropriate session such as ipython is not found, set all
+    " values to 999 for error handling output messages
+    if strlen(l:vimuxide_tmux_panenumber)==0
+        let g:vimuxide_tmux_sessionname = 999
+        let g:vimuxide_tmux_windowname = 999
+        let g:vimuxide_tmux_panenumber = 999
+    endif
+endfunction
+
 
 function! g:CallSystem(cmd)
   " Execute the given system command, reporting errors if any
   let l:out = system(a:cmd)
   if v:shell_error != 0
-    echom 'Vim-cellmode, error running ' . a:cmd . ' : ' . l:out
+    echom 'Vimuxide, error running ' . a:cmd . ' : ' . l:out
   end
 endfunction
 
 function! CopyToTmux(code)
-  " Copy the given code to tmux. We use a temp file for that
-  let l:lines = split(a:code, "\n")
-  " If the file is empty, it seems like tmux load-buffer keep the current
-  " buffer and this cause the last command to be repeated. We do not want that
-  " to happen, so add a dummy string
-  if len(l:lines) == 0
-    call add(l:lines, ' ')
-  end
-  let l:vimuxide_fname = GetNextTempFile()
-  call writefile(l:lines, l:vimuxide_fname)
+  if b:vimuxide_tmux_sessionname == 999
+      call UnsetTmuxSettings()
+      echom 'Appropriate Tmux/'.&filetype.' Session DOES NOT EXIST!'
+      return
+  else
+      " Copy the given code to tmux. We use a temp file for that
+      let l:lines = split(a:code, "\n")
+      " If the file is empty, it seems like tmux load-buffer keep the current
+      " buffer and this cause the last command to be repeated. We do not want that
+      " to happen, so add a dummy string
+      if len(l:lines) == 0
+        call add(l:lines, ' ')
+      end
+      let l:vimuxide_fname = GetNextTempFile()
+      call writefile(l:lines, l:vimuxide_fname)
 
-  " tmux requires the sessionname to start with $ (for example $ipython to
-  " target the session named 'ipython'). Except in the case where we
-  " want to target the current tmux session (with vim running in tmux)
-  let target = b:vimuxide_tmux_sessionname . ':'
-             \ . b:vimuxide_tmux_windowname . '.'
-             \ . b:vimuxide_tmux_panenumber
+      " tmux requires the sessionname to start with $ (for example $ipython to
+      " target the session named 'ipython'). Except in the case where we
+      " want to target the current tmux session (with vim running in tmux)
+      let target = b:vimuxide_tmux_sessionname . ':'
+                 \ . b:vimuxide_tmux_windowname . '.'
+                 \ . b:vimuxide_tmux_panenumber
 
-  " Ipython has some trouble if we paste large buffer if it has been started
-  " in a small console. We use %load to work around that
-  "call CallSystem('tmux load-buffer ' . l:vimuxide_fname)
-  "call CallSystem('tmux paste-buffer -t ' . target)
-  call CallSystem("tmux set-buffer \"%load -y " . l:vimuxide_fname . "\n\"")
-  call CallSystem('tmux paste-buffer -t "' . target . '"')
-  " In ipython5, the cursor starts at the top of the lines, so we have to move
-  " to the bottom
-  let downlist = repeat('Down ', len(l:lines) + 1)
-  call CallSystem('tmux send-keys -t "' . target . '" ' . downlist)
-  " Simulate double enter to run loaded code
-  call CallSystem('tmux send-keys -t "' . target . '" Enter Enter')
+      " Ipython has some trouble if we paste large buffer if it has been started
+      " in a small console. We use %load to work around that
+      "call CallSystem('tmux load-buffer ' . l:vimuxide_fname)
+      "call CallSystem('tmux paste-buffer -t ' . target)
+      
+      "call CallSystem("tmux set-buffer \"%load -y " . l:vimuxide_fname . "\n\"")
+      "call CallSystem('tmux paste-buffer -t "' . target . '"')
+      " In ipython5, the cursor starts at the top of the lines, so we have to move
+      " to the bottom
+      " let downlist = repeat('Down ', len(l:lines) + 1)
+      "call CallSystem('tmux send-keys -t "' . target . '" ' . downlist)
+      " Simulate double enter to run loaded code
+      "call CallSystem('tmux send-keys -t "' . target . '" Enter Enter')
+      call CallSystem("tmux send-keys '%load -y ".l:vimuxide_fname."' C-m C-m C-m")
+
+      " output messages to tell where code is pasted 
+      echom 'Code Copied to '.b:vimuxide_tmux_sessionname.':'.b:vimuxide_tmux_windowname.'.'.b:vimuxide_tmux_panenumber
+  endif
 endfunction
 
 function! ResetTmuxSettings()
