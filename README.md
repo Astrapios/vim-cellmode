@@ -1,7 +1,6 @@
-Vim-cellmode
+VimuxIDE
 ============
-This a vim plugin that enables MATLAB-style cell mode execution for python
-scripts in vim, assuming an ipython interpreter running in screen (or tmux).
+This a vim plugin that enables interaction of a script with a interpreter such as Ipython through the tmux.
 
 Demo
 ----
@@ -47,7 +46,7 @@ By default, the following mappings are enabled :
 
 You can disable default mappings :
 
-    let g:cellmode_default_mappings='0'
+    let g:vimuxide_default_mappings='0'
 
 In addition, there is a function to execute all cells above the current line
 which isn't bound by default, but you can easily bind it with :
@@ -60,19 +59,19 @@ Options
 You have to configure the target tmux/screen session/window/pane. By default, the
 following is used :
 
-    let g:cellmode_tmux_sessionname=''  " Will try to automatically pickup tmux session
-    let g:cellmode_tmux_windowname=''
-    let g:cellmode_tmux_panenumber='0'
+    let g:vimuxide_tmux_sessionname=''  " Will try to automatically pickup tmux session
+    let g:vimuxide_tmux_windowname=''
+    let g:vimuxide_tmux_panenumber='0'
 
-    let g:cellmode_screen_sessionname='ipython'
-    let g:cellmode_screen_window='0'
+    let g:vimuxide_screen_sessionname='ipython'
+    let g:vimuxide_screen_window='0'
 
 This scripts relies on temporary files to send text from vim to tmux. To
 allow cell execution queuing, we use a rolling buffer of temporary files.
-You can control the size of the buffer by defining `g:cellmode_n_files` (10
+You can control the size of the buffer by defining `g:vimuxide_n_files` (10
 by default).
 
-To choose between tmux and screen, set g:cellmode_use_tmux=1 (or 0 if you want screen).
+To choose between tmux and screen, set g:vimuxide_use_tmux=1 (or 0 if you want screen).
 Note that currently, CopyToScreen relies on OSX' pbcopy to set the paste buffer.
 
 Difference with vim-ipython
@@ -85,4 +84,3 @@ The main difference with vim-ipython is that this plugin simply emulate a paste
 as you would do it manually from vim to ipython. This allow to see the result
 of the execution directly in the ipython split whereas vim-ipython uses a
 separate vim buffer to show the results.
-

@@ -169,26 +169,55 @@ function! RunTmuxPythonCell(restore_cursor)
   " See the doce on 'ex ranges' here :
   " http://tnerual.eriogerg.free.fr/vimqrc.html
   call DefaultVars()
-  if a:restore_cursor
-    let l:winview = winsaveview()
+
+  " save current view, and use this if cursor needs to be restored
+  let l:winview = winsaveview()
+
+  " search for block separator to take care of each case
+  let l:block_search_backward = search(g:vimuxide_block_separator, 'bnW')
+  let l:block_search_forward = search(g:vimuxide_block_separator, 'nW')
+
+
+  "=================== Different cases for block separators ==================
+  " if block separator is found both top and bottom:
+  if l:block_search_backward !=0 && l:block_search_forward !=0
+      silent :exec "?".g:vimuxide_block_separator."?;/".g:vimuxide_block_separator."/y a"
+      " The above will have the leading and ending <C-r>=g:vimuxide_block_separator<CR> in the register, but we
+      " have to remove them (especially leading one) to get a correct indentation
+      " estimate. So just select the correct subrange of lines [1:-2]
+      let @a=join(split(@a, "\n")[1:-2], "\n")
+      let l:restore_cursor = 0
+
+  " if block separator does not exist in the file:
+  elseif l:block_search_backward == 0 && l:block_search_forward == 0
+      silent :exec "%y a"
+      let @a=join(split(@a, "\n")[0:-1], "\n")
+      let l:restore_cursor = 1
+
+  " if block separator only exists in the forward direciton:
+  elseif l:block_search_backward == 0 
+      silent :exec "1;/".g:vimuxide_block_separator."/y a"
+      let @a=join(split(@a, "\n")[0:-2], "\n")
+      let l:restore_cursor = 0
+
+  " if block separator only exists in the backward direciton:
+  else
+      silent :exec "?".g:vimuxide_block_separator."?;$y a"
+      let @a=join(split(@a, "\n")[1:-1], "\n")
+      let l:restore_cursor = 1
   end
-  silent :exec "?".g:vimuxide_block_separator."?;/".g:vimuxide_block_separator."/y a"
+  "=================== Different cases END==================
 
   " Now, we want to position ourselves inside the next block to allow block
   " execution chaining (of course if restore_cursor is true, this is a no-op
-  " Move to the last character of the previously yanked text
-  execute "normal! ']"
-  " Move one line down
-  execute "normal! j"
-
-  " The above will have the leading and ending <C-r>=g:vimuxide_block_separator<CR> in the register, but we
-  " have to remove them (especially leading one) to get a correct indentation
-  " estimate. So just select the correct subrange of lines [1:-2]
-  let @a=join(split(@a, "\n")[1:-2], "\n")
-  call RunTmuxPythonReg()
-  if a:restore_cursor
+  if a:restore_cursor || l:restore_cursor
     call winrestview(l:winview)
+  else
+    execute "normal! ']"
+    execute "normal! j"
   end
+
+  call RunTmuxPythonReg()
 endfunction
 
 function! ResetTmuxSettings()
