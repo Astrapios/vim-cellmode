@@ -186,15 +186,17 @@ function! CopyToTmux(code, run_command)
         " send command to target tmux session:window.pane
         call CallSystem("tmux send-keys -t ".target." '".a:run_command." ".l:vimuxide_fname."' C-m")
 
-        " below is python specific.. should think about how to change this when
+        " below is python specific.. for %load ipython magic command.
+        " I should think about how to change this when
         " other language is added
         " ipython requires multiple enter keys that depends on line length
         " after loading code with %load -y file
-        if l:n_lines > 1
-            call CallSystem("tmux send-keys -t ".target." C-m C-m")
-        else
-            call CallSystem("tmux send-keys -t ".target." C-m")
-        endif
+        
+        " if l:n_lines > 1
+        "     call CallSystem("tmux send-keys -t ".target." C-m C-m")
+        " else
+        "     call CallSystem("tmux send-keys -t ".target." C-m")
+        " endif
 
         " output messages to tell where code is pasted 
         echom 'Code is Successfully Copied to '.b:vimuxide_tmux_sessionname.':'.b:vimuxide_tmux_windowname.'.'.b:vimuxide_tmux_panenumber

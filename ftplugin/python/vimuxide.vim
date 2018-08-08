@@ -1,5 +1,5 @@
 let b:vimuxide_program_title = GetVar("vimuxide_python_program_title", "ipython")
-let b:vimuxide_run_command = GetVar("vimuxide_python_run_command", "%load -y")
+let b:vimuxide_run_command = GetVar("vimuxide_python_run_command", "%run -ni")
 
 "Run entire python file
 function! RunPythonFile()
