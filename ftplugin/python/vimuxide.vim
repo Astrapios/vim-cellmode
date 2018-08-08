@@ -29,6 +29,7 @@ function! RunPythonFile()
         let l:change_dir = "'cd \"".l:file_directory."\"' C-m"
         let l:run_file = "'run \"".l:file_name."\"' C-m"
 
+        call CallSystem("tmux send-keys -t " .l:target." C-c")
         call CallSystem("tmux send-keys -t " .l:target." ".l:change_dir)
         call CallSystem("tmux send-keys -t " .l:target." ".l:run_file)
     endif
