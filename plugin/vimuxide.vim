@@ -122,20 +122,21 @@ function! DefaultVars()
   "   b:vimuxide_tmux_panenumber :
   "   buffer-specific target (defaults to g:)
 
-  " Check if buffer variable exists
-  let l:buffer_variable_exists = exists('b:vimuxide_tmux_sessionname') &&
+  " Check if tmux buffer variable exists
+  let l:tmux_buffer_variable_exists = 
+              \exists('b:vimuxide_tmux_sessionname') &&
               \exists('b:vimuxide_tmux_windowname') &&
               \exists('b:vimuxide_tmux_panenumber')
-
   " if buffer variable does not exist, check if global variables exist
-  if !l:buffer_variable_exists
-      let l:global_variable_exists = exists('g:vimuxide_tmux_sessionname') &&
+  if !l:tmux_buffer_variable_exists
+      let l:tmux_global_variable_exists = 
+                  \exists('g:vimuxide_tmux_sessionname') &&
                   \exists('g:vimuxide_tmux_windowname') &&
                   \exists('g:vimuxide_tmux_panenumber')
 
       " if global variables does not exist, search for appropriate tmux
       " session
-      if !l:global_variable_exists
+      if !l:tmux_global_variable_exists
           let b:vimuxide_n_files=10
           call TmuxSessionFinder(b:vimuxide_program_title)
 
@@ -145,7 +146,17 @@ function! DefaultVars()
           let b:vimuxide_tmux_windowname = g:vimuxide_tmux_windowname
           let b:vimuxide_tmux_panenumber = g:vimuxide_tmux_panenumber
       endif
- endif
+   endif
+
+  " check if block separator is defined in the buffer exists
+  if !exists('b:vimuxide_block_separator')
+      " if not defined in the buffer, check whether defined globally
+      if !exists('g:vimuxide_block_separator')
+          let b:vimuxide_block_separator = input("Block Separator: ", '# %%')
+      else
+          let b:vimuxide_block_separator = g:vimuxide_block_separator
+      endif
+  endif
 endfunction
 
 function! g:CallSystem(cmd)
@@ -245,7 +256,7 @@ function! TmuxSendCell(restore_cursor)
   " however, for code blocks, special characters are used, so vim specific
   " rules are more useful
   let l:block_search_regex =
-              \'\(^\s*\)\?'.g:vimuxide_block_separator
+              \'\(^\s*\)\?'.b:vimuxide_block_separator
 
   " search for block separator to take care of each case
   let l:block_search_backward = search(l:block_search_regex, 'bnW')
@@ -328,7 +339,7 @@ function! TmuxSendAllCellsAbove()
 
   " Creates a range from the first line to the closest <C-r>=g:vimuxide_block_separator<CR> above the current
   " line (?<C-r>=g:vimuxide_block_separator<CR>? searches backward for <C-r>=g:vimuxide_block_separator<CR>)
-  silent :exec "1,?".g:vimuxide_block_separator."?y a"
+  silent :exec "1,?".b:vimuxide_block_separator."?y a"
 
   let @a=join(split(@a, "\n")[:-2], "\n")
   call TmuxSendReg()
