@@ -76,7 +76,7 @@ function! TmuxSessionFinder(program_title)
     " search for interactive program within current tmux session if vim is
     " within a tmux session, or search last active session
     let l:active_vimuxide_session = 
-                \system("tmux list-panes -sF '#{session_name} #{window_index} #P #W' | grep ".a:program_title." | grep -o '^\\w\\+ \\w\\+ \\w\\+'")
+                \system("tmux list-panes -sF '#{session_name} #{window_index} #P #{pane_title}' | grep ".a:program_title." | grep -o '^\\w\\+ \\w\\+ \\w\\+'")
 
     " if interactive program is found, save the session name, window name, and
     " pane number of the location

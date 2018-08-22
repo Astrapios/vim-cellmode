@@ -40,7 +40,7 @@ if g:vimuxide_default_mappings
     vmap <silent> <C-c> :call TmuxSendChunk()<CR>
     noremap <silent> <C-b> :call TmuxSendCell(0)<CR>
     noremap <silent> <C-g> :call TmuxSendCell(1)<CR>
-    noremap <F5> :w<CR>:call RunPythonFile()<CR>
+    noremap <F5> :update<CR>:call RunPythonFile()<CR>
     noremap <F7> :call ResetTmuxSettings()<CR>
     noremap <F8> :call UnsetTmuxSettings()<CR>
 endif
