@@ -52,7 +52,7 @@ function! GetNextTempFile()
         let b:vimuxide_fnames = []
 
         for i in range(1, b:vimuxide_n_files)
-            call add(b:vimuxide_fnames, tempname() . ".tmp")
+            call add(b:vimuxide_fnames, tempname() . ".m")
         endfor
         let b:vimuxide_fnames_index = 0
     endif

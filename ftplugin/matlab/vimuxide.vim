@@ -1,5 +1,5 @@
 let b:vimuxide_program_title = GetVar("vimuxide_python_program_title", "matlab")
-let b:vimuxide_run_command = GetVar("vimuxide_python_run_command", "%run")
+let b:vimuxide_run_command = GetVar("vimuxide_python_run_command", "run")
 let b:vimuxide_block_separator = GetVar("vimuxide_block_separator", "%% ")
 
 "Run entire matlab file
