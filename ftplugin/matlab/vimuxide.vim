@@ -1,6 +1,6 @@
 let b:vimuxide_program_title = GetVar("vimuxide_python_program_title", "matlab")
 let b:vimuxide_run_command = GetVar("vimuxide_python_run_command", "run")
-let b:vimuxide_block_separator = GetVar("vimuxide_block_separator", "%% ")
+let b:vimuxide_block_separator = GetVar("vimuxide_block_separator", "%%")
 
 "Run entire matlab file
 function! RunMatlabFile()
@@ -27,8 +27,8 @@ function! RunMatlabFile()
         
         " For Future, should check to see if CWD is already the directory
         " containing source code
-        let l:change_dir = "'cd \"".l:file_directory."\"' C-m"
-        let l:run_file = "'run \"".l:file_name."\"' C-m"
+        let l:change_dir = "\"cd "."'".l:file_directory."'\" C-m"
+        let l:run_file = "\"run "."'".l:file_name."'\" C-m"
 
         call CallSystem("tmux send-keys -t " .l:target." C-c")
         call CallSystem("tmux send-keys -t " .l:target." ".l:change_dir)
