@@ -49,7 +49,6 @@ function! GetNextTempFile()
     " vimuxide_n_files)
     if !exists("b:vimuxide_fnames")
         au BufDelete <buffer> call CleanupTempFiles()
-        let l:numbers = range(b:vimuxide_n_files)
         let b:vimuxide_fnames = []
         let l:fextension = expand('%:e')
 
@@ -57,7 +56,7 @@ function! GetNextTempFile()
             " tempname() generates files with name beginning with a number
             " so take that out and replace it to temp0, temp1 and so on
             let l:vimuxide_fname=substitute(tempname(), '/\d\+', '/', '')
-            call add(b:vimuxide_fnames, l:vimuxide_fname.'temp'.l:numbers[i]. '.'.l:fextension)
+            call add(b:vimuxide_fnames, l:vimuxide_fname.'temp'.i. '.'.l:fextension)
         endfor
         let b:vimuxide_fnames_index = 0
     endif
