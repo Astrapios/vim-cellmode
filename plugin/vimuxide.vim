@@ -196,8 +196,6 @@ function! CopyToTmux(code, run_command)
                    \ . b:vimuxide_tmux_windowname . '.'
                    \ . b:vimuxide_tmux_panenumber
 
-        " clear the command prompt first, before sending the code
-        call CallSystem("tmux send-keys -t ".target." C-c")
         " send command to target tmux session:window.pane
         call CallSystem("tmux send-keys -t ".target." '".a:run_command." ".l:vimuxide_fname."' C-m")
 
